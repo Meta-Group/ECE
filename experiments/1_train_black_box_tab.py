@@ -193,7 +193,7 @@ def main():
                 raise Exception
 
             rs = RandomizedSearchCV(bb, param_distributions=params[black_box], n_iter=n_iter, cv=5, scoring='f1_macro',
-                                    iid=False, n_jobs=n_jobs, verbose=1)
+                                    n_jobs=n_jobs, verbose=1)
             rs.fit(X_train, y_train)
             bb = rs.best_estimator_
 
