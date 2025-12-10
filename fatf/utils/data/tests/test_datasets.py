@@ -365,7 +365,7 @@ def test_load_data(tmpdir):
 
     # Incorrect feature_names supplied and a simple dtype
     with pytest.raises(TypeError) as exin:
-        fudd.load_data(temp_file_path, feature_names=4, dtype=np.int)
+        fudd.load_data(temp_file_path, feature_names=4, dtype=int)
     assert str(exin.value) == type_error_feature_names
 
     # Incorrect feature_names supplied and a complex dtype
@@ -380,7 +380,7 @@ def test_load_data(tmpdir):
     write_to_temp('2,2,fail,pass\n1,foo,pass\n2,bar,fail')
     my_feature_names = ['feature_0', 'feature_1']
     my_feature_names_np = np.array(my_feature_names)
-    my_feature_dtype = [('feature_0', np.int),
+    my_feature_dtype = [('feature_0', int),
                         ('feature_1', np.dtype(string_type.format('3')))]
     my_data = np.array([(1, 'foo'), (2, 'bar')], dtype=my_feature_dtype)
     my_target = np.array(['pass', 'fail'], dtype=string_type.format('4'))
@@ -398,7 +398,7 @@ def test_load_data(tmpdir):
     #
     my_feature_names = ['f0', 'f1']
     my_feature_names_np = np.array(my_feature_names)
-    my_feature_dtype = [('f0', np.int),
+    my_feature_dtype = [('f0', int),
                         ('f1', np.dtype(string_type.format('3')))]
     my_data = np.array([(1, 'foo'), (2, 'bar')], dtype=my_feature_dtype)
     loaded_data = fudd.load_data(
