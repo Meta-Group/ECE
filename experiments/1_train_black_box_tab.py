@@ -149,13 +149,15 @@ def main():
 
     black_box = 'DNN'
     for dataset in [
-        'compas'
-        # 'adult',
-        #             #'bank', 'churn',
-        # 'compas', #'diabetes',
-        # 'fico',
-        # 'german',
-        # 'home', 'titanic'
+        'compas',
+        'adult',
+        'bank', 
+        'churn',
+        'diabetes',
+        'fico',
+        'german',
+        'home', 
+        'titanic'
     ]:
 
         normalize = 'standard'
