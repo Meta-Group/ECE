@@ -710,7 +710,7 @@ def get_tabular_dataset(name, path='./', normalize=None, test_size=0.3, random_s
     n_cate_var = len(categorical_features_lists)
     n_cate_var1h = n_var - n_cont_var
 
-    X = df[feature_names].values
+    X = df[feature_names].values.astype(np.float64)
     y = df[class_name].values
 
     if normalize == 'minmax':
