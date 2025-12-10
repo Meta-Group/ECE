@@ -26,8 +26,8 @@ import category_encoders as ce
 
 datasets = {
     'avila': ('avila.csv', 'tab'),
-    #'adult': ('adult.csv', 'tab'),
-    'adult': ('adult_missing.csv', 'tab'),
+    'adult': ('adult.csv', 'tab'),
+    # 'adult': ('adult_missing.csv', 'tab'),
     'bank': ('bank.csv', 'tab'),
     'churn': ('churn.csv', 'tab'),
     'ctg': ('ctg.csv', 'tab'),
