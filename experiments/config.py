@@ -1,10 +1,7 @@
 import platform
+import os 
 
-if 'Linux' in platform.platform():
-    path = '/home/riccotti/Documents/Counterfactuals/'
-    path = '/home/riccotti/Documents/CounterfactualExplanations/'
-else:
-    path = '/Users/riccardo/Documents/Research/CounterfactualExplanations/'
+path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/'
 
 path_dataset = path + 'dataset/'
 path_models = path + 'models/'
