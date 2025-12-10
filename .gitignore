@@ -66,3 +66,10 @@ coverage.xml
 
 # Pyre type checker
 .pyre/
+
+# Ignore generated experiment artifacts
+results/
+models/
+
+# Ignore local temporary experiment files
+.temp/
