@@ -495,6 +495,12 @@ def experiment(cfe, bb, X_train, y_train, variable_features, metric, continuous_
                         f.write(f"{i},{target_class},{original_sample},{cf_sample},{timestamp}\n")
                 total_cf_generated += len(cf_list)
 
+            # Convert cf_list to numpy array for compatibility with evaluate_cf_list
+            if cf_list:
+                cf_list = np.array(cf_list)
+            else:
+                cf_list = np.array([])
+
             time_test = (datetime.datetime.now() - time_start_i).total_seconds()
 
             x_eval = evaluate_cf_list(cf_list, x, bb, y_val, k, variable_features,
