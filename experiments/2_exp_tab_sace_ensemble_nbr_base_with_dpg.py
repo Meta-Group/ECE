@@ -576,6 +576,36 @@ def main():
     # For titanic dataset: all features are mutable ('none')
     dpg_dict_non_actionable = {}
 
+    # ============================================================================
+    # DPG-ONLY MODE: Only run DPG counterfactual extraction for faster testing
+    # To run ALL methods (including sace-ens-*), set RUN_DPG_ONLY = False
+    # ============================================================================
+    RUN_DPG_ONLY = True
+    
+    if RUN_DPG_ONLY:
+        # Run only DPG counterfactual method
+        if not dpg_enabled:
+            print("ERROR: DPG constraint extraction failed, cannot run dpg-cf method")
+            return -1
+        
+        cfe = 'dpg-cf'
+        cfe_str = cfe
+        filename_results = path_results + 'nbr_base_estimators_%s_%s_%s.csv' % (dataset, black_box, cfe_str)
+        
+        print(datetime.datetime.now(), "Running DPG-CF only mode...")
+        experiment(cfe, bb, X_train, variable_features, metric,
+                   continuous_features, categorical_features_lists,
+                   X_test, nbr_test, search_diversity, dataset, black_box, known_train,
+                   continuous_features_all, categorical_features_all, ratio_cont, nbr_features,
+                   filename_results, filename_results, features_names, None, None,
+                   dpg_constraints_path=dpg_constraints_path,
+                   dpg_dict_non_actionable=dpg_dict_non_actionable)
+        
+        print(datetime.datetime.now(), "DPG-CF experiment completed!")
+        print(f"Results saved to: {filename_results}")
+        return 0
+
+    # Full experiment mode: run all methods including sace-ens-*
     for cfe in [
         'sace-ens-h',
         'sace-ens-d',
