@@ -9,3 +9,14 @@ tensorflow
 category_encoders
 lightgbm
 packaging>=21.0
+
+#dpg dependencies
+tdqm
+graphviz
+numpy
+pandas
+matplotlib
+seaborn
+scipy
+scikit-learn
+pyyaml
