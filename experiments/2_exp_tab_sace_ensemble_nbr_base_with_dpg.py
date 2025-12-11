@@ -485,7 +485,7 @@ def experiment(cfe, bb, X_train, y_train, variable_features, metric, continuous_
                                               lambda_par=1.0, cf_rate=0.5, cf_rate_incr=0.1)
 
             # Save DPG counterfactuals
-            if cfe == 'dpg-cf' and cf_list:
+            if cfe == 'dpg-cf' and (hasattr(cf_list, '__len__') and len(cf_list) > 0):
                 target_class = 1 - y_val  # Assuming binary classification
                 timestamp = datetime.datetime.now().isoformat()
                 original_sample = ','.join(map(str, x))
@@ -496,7 +496,7 @@ def experiment(cfe, bb, X_train, y_train, variable_features, metric, continuous_
                 total_cf_generated += len(cf_list)
 
             # Convert cf_list to numpy array for compatibility with evaluate_cf_list
-            if cf_list:
+            if hasattr(cf_list, '__len__') and len(cf_list) > 0:
                 cf_list = np.array(cf_list)
             else:
                 cf_list = np.array([])
@@ -650,7 +650,7 @@ def main():
     # DPG-ONLY MODE: Only run DPG counterfactual extraction for faster testing
     # To run ALL methods (including sace-ens-*), set RUN_DPG_ONLY = False
     # ============================================================================
-    RUN_DPG_ONLY = True
+    RUN_DPG_ONLY = False
     
     if RUN_DPG_ONLY:
         # Run only DPG counterfactual method
