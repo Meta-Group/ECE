@@ -238,7 +238,7 @@ def gatherAndSaveDistances():
               all_counterfactual_distances = []
               all_counterfactual_times = []
 
-            df_all_distances = df_all_distances.append({
+            df_all_distances = pd.concat([df_all_distances, pd.DataFrame([{
               'dataset': dataset_string,
               'model': model_class_string,
               'norm': norm_type_string,
@@ -259,7 +259,7 @@ def gatherAndSaveDistances():
               'age increased': age_increased,
               'age decreased': age_decreased,
               'interventional distance': minimum_distance_file[key]['interventional_distance'],
-            }, ignore_index =  True)
+            }])], ignore_index = True) 
   # ipsh()
           # except:
           #   print(f'Problem with adding row in data frame.')
@@ -345,7 +345,7 @@ def gatherAndSaveDistanceTimeTradeoffData():
 
                 for iteration_counter in range(len(all_counterfactual_distances)):
 
-                  tmp_df = tmp_df.append({
+                  tmp_df = pd.concat([tmp_df, pd.DataFrame([{
                     'factual_sample_index': row['factual sample index'],
                     'dataset': dataset_string,
                     'model': model_class_string,
@@ -354,7 +354,7 @@ def gatherAndSaveDistanceTimeTradeoffData():
                     'iteration': int(iteration_counter) + 1,
                     'distance': all_counterfactual_distances[iteration_counter],
                     'time': cum_counterfactual_times[iteration_counter],
-                  }, ignore_index =  True)
+                  }])], ignore_index = True) 
 
             else:
 
@@ -362,7 +362,7 @@ def gatherAndSaveDistanceTimeTradeoffData():
 
                 for iteration_counter in range(15):
 
-                  tmp_df = tmp_df.append({
+                  tmp_df = pd.concat([tmp_df, pd.DataFrame([{
                     'factual_sample_index': row['factual sample index'],
                     'dataset': dataset_string,
                     'model': model_class_string,
@@ -371,7 +371,7 @@ def gatherAndSaveDistanceTimeTradeoffData():
                     'iteration': int(iteration_counter) + 1,
                     'distance': row['counterfactual distance'],
                     'time': row['counterfactual time'],
-                  }, ignore_index =  True)
+                  }])], ignore_index = True) 
 
   pickle.dump(tmp_df, open(f'_results/df_all_distance_vs_time', 'wb'))
 

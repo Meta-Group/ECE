@@ -270,7 +270,7 @@ def measureEffectOfAgeAdultPart3():
   for pair in pairs:
     unrestricted_df1 = pickle.load(open(pair[1], 'rb'))
     unrestricted_df2 = pickle.load(open(pair[2], 'rb'))
-    unrestricted_df = unrestricted_df1.append(unrestricted_df2, ignore_index=True)
+    unrestricted_df = pd.concat([unrestricted_df1, unrestricted_df2], ignore_index=True)
     unrestricted_file = pickle.load(open(pair[3], 'rb'))
     restricted_file = pickle.load(open(pair[4], 'rb'))
     # assert unrestricted_df.shape[0] == 18 # %3.6 x 500

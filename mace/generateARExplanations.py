@@ -24,7 +24,7 @@ def genExp(model_trained, factual_sample, norm_type, dataset_obj):
   sample_row = tmp_df.loc[0].to_dict()
   for attr_name_kurz in dataset_obj.getOneHotAttributesNames('kurz'):
     sample_row[attr_name_kurz] = 0
-  tmp_df = tmp_df.append(pd.Series(sample_row), ignore_index=True)
+  tmp_df = pd.concat([tmp_df, pd.DataFrame([sample_row])], ignore_index=True)
 
   df = tmp_df
   X = df.loc[:, df.columns != 'y']
