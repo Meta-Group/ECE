@@ -348,7 +348,7 @@ class PublicData:
         else:
             temp = self.prepare_df_for_encoding()
 
-            temp = temp.append(test, ignore_index=True, sort=False)
+            temp = pd.concat([temp, test], ignore_index=True, sort=False)
             temp = self.one_hot_encode_data(temp)
             temp = self.normalize_data(temp)
 
