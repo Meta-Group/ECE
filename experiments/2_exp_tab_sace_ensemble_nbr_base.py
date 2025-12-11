@@ -201,7 +201,7 @@ def experiment(cfe, bb, X_train, variable_features, metric, continuous_features,
 def main():
 
     nbr_test = 20
-    dataset = 'german'
+    dataset = 'titanic'
     black_box = 'RF'
     normalize = 'standard'
     # normalize_str = '' if normalize is None else '_%s' % normalize
