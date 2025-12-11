@@ -45,6 +45,17 @@ def experiment(cfe, bb, bb_dice, X_train, variable_features, features_names, var
     else:
         features_to_vary = 'all'
 
+    # Debugging flags: set DICE_DEBUG=1 in environment to enable shorter runs and verbose output
+    debug_mode = os.getenv('DICE_DEBUG', '0') == '1'
+    if debug_mode:
+        min_iter = 10
+        max_iter = 50
+        verbose = True
+    else:
+        min_iter = 500
+        max_iter = 5000
+        verbose = False
+
     index_test_instances = np.random.choice(range(len(X_test)), nbr_test)
 
     print(datetime.datetime.now(), dataset, black_box)
@@ -65,7 +76,11 @@ def experiment(cfe, bb, bb_dice, X_train, variable_features, features_names, var
                                                     total_CFs=k, desired_class='opposite',
                                                     features_to_vary=features_to_vary,
                                                     proximity_weight=0.5,
-                                                    diversity_weight=1.0)
+                                                    diversity_weight=1.0,
+                                                    min_iter=min_iter,
+                                                    max_iter=max_iter,
+                                                    verbose=verbose,
+                                                    print_interval=(1 if debug_mode else 50))
             cf_list = np.array(dice_exp.final_cfs)
             cf_list = cf_list.reshape((cf_list.shape[0], cf_list.shape[-1]))
 
