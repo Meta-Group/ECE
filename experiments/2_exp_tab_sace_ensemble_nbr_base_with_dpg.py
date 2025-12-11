@@ -146,12 +146,48 @@ def extract_dpg_constraints(X_train, y_train, feature_names, output_dir, model_t
             f'{model_type}_l{n_learners}_pv{purity_threshold}_t{decimal_threshold}_dpg_metrics.txt'
         )
         
+        # Parse Class Bounds into expected format
+        parsed_constraints = {}
+        if "Class Bounds" in df_dpg:
+            class_bounds = df_dpg["Class Bounds"]
+            for class_name, bounds_list in class_bounds.items():
+                parsed_list = []
+                for bound_str in bounds_list:
+                    # Parse bounds like "-0.25 < Family <= 4.09" or "Age <= 3.49" or "Age > -2.02"
+                    bound_str = bound_str.strip()
+                    if "<=" in bound_str and "<" in bound_str:
+                        # min < feature <= max
+                        parts = bound_str.split(" < ")
+                        if len(parts) == 2:
+                            min_val = float(parts[0].strip())
+                            right_part = parts[1].strip()  # "feature <= max"
+                            if " <= " in right_part:
+                                feat, max_str = right_part.split(" <= ")
+                                max_val = float(max_str.strip())
+                                parsed_list.append({"feature": feat.strip(), "min": min_val, "max": max_val})
+                    elif "<=" in bound_str:
+                        # feature <= max
+                        parts = bound_str.split(" <= ")
+                        if len(parts) == 2:
+                            feat = parts[0].strip()
+                            max_val = float(parts[1].strip())
+                            parsed_list.append({"feature": feat, "min": None, "max": max_val})
+                    elif ">" in bound_str:
+                        # feature > min
+                        parts = bound_str.split(" > ")
+                        if len(parts) == 2:
+                            feat = parts[0].strip()
+                            min_val = float(parts[1].strip())
+                            parsed_list.append({"feature": feat, "min": min_val, "max": None})
+                parsed_constraints[class_name] = parsed_list
+        
+        # Save parsed constraints to file
         if verbose:
-            print(f"[DPG] Saving metrics to {metrics_filename}")
+            print(f"[DPG] Saving parsed constraints to {metrics_filename}")
         
         with open(metrics_filename, 'w') as f:
-            for key, value in df_dpg.items():
-                f.write(f"{key}: {value}\n")
+            for class_name, constraints in parsed_constraints.items():
+                f.write(f"{class_name}: {constraints}\n")
         
         # Clean up temp config
         if os.path.exists(temp_config_path):
@@ -198,17 +234,19 @@ class DPGCounterFactualExplainer:
         self.cf_model = None
         self.feature_names = None
         
-    def fit(self, blackbox, X_train, feature_names=None):
+    def fit(self, blackbox, X_train, y_train=None, feature_names=None):
         """
         Fit the explainer with blackbox and training data.
         
         Args:
             blackbox: BlackBox wrapper object
             X_train: Training data
+            y_train: Training labels
             feature_names: Optional list of feature names for constraint mapping
         """
         self.blackbox = blackbox
         self.X_train = X_train
+        self.y_train = y_train
         self.feature_names = feature_names
         
         # Initialize CounterFactualModel with constraints
@@ -245,7 +283,7 @@ class DPGCounterFactualExplainer:
         current_class = self.blackbox.predict(x.reshape(1, -1))[0]
         
         # Get target classes (opposite of current class)
-        unique_classes = np.unique(self.X_train)
+        unique_classes = np.unique(self.y_train)
         target_classes = [c for c in unique_classes if c != current_class]
         
         if not target_classes:
@@ -294,7 +332,7 @@ class DPGCounterFactualExplainer:
         return cf_list[:k]  # Return exactly k counterfactuals
 
 
-def experiment(cfe, bb, X_train, variable_features, metric, continuous_features, categorical_features_lists,
+def experiment(cfe, bb, X_train, y_train, variable_features, metric, continuous_features, categorical_features_lists,
                X_test, nbr_test, search_diversity, dataset, black_box, known_train, continuous_features_all,
                categorical_features_all, ratio_cont, nbr_features, filename_results, filename_cf, features_names,
                covertype, n_estimators, dpg_constraints_path=None, dpg_dict_non_actionable=None):
@@ -323,9 +361,9 @@ def experiment(cfe, bb, X_train, variable_features, metric, continuous_features,
             variable_features=variable_features,
             constraints_dict=constraints_dict,
             dict_non_actionable=dict_non_actionable,
-            verbose=False,
-            population_size=20,
-            max_generations=60
+            verbose=True,
+            population_size=5,
+            max_generations=5
         )
     elif cfe == 'sace-ens-d':
         exp = EnsembleECE(variable_features, weights=None, metric=metric,
@@ -399,7 +437,15 @@ def experiment(cfe, bb, X_train, variable_features, metric, continuous_features,
         print('unknown counterfactual explainer %s' % cfe)
         raise Exception
 
-    exp.fit(bb, X_train)
+    if cfe == 'dpg-cf':
+        exp.fit(bb, X_train, y_train, feature_names=features_names)
+        # Initialize DPG counterfactuals CSV
+        dpg_cf_filename = os.path.join(os.path.dirname(filename_results), f"dpg_counterfactuals_{dataset}_{black_box}.csv")
+        with open(dpg_cf_filename, 'w') as f:
+            f.write("idx,target_class,original_sample,counterfactual,timestamp\n")
+        total_cf_generated = 0
+    else:
+        exp.fit(bb, X_train)
 
     time_train = (datetime.datetime.now() - time_start).total_seconds()
 
@@ -437,6 +483,17 @@ def experiment(cfe, bb, X_train, variable_features, metric, continuous_features,
             cf_list = exp.get_counterfactuals(x, k=k, search_diversity=search_diversity,
                                               covertype=covertype,
                                               lambda_par=1.0, cf_rate=0.5, cf_rate_incr=0.1)
+
+            # Save DPG counterfactuals
+            if cfe == 'dpg-cf' and cf_list:
+                target_class = 1 - y_val  # Assuming binary classification
+                timestamp = datetime.datetime.now().isoformat()
+                original_sample = ','.join(map(str, x))
+                for cf in cf_list:
+                    cf_sample = ','.join(map(str, cf))
+                    with open(dpg_cf_filename, 'a') as f:
+                        f.write(f"{i},{target_class},{original_sample},{cf_sample},{timestamp}\n")
+                total_cf_generated += len(cf_list)
 
             time_test = (datetime.datetime.now() - time_start_i).total_seconds()
 
@@ -484,6 +541,13 @@ def experiment(cfe, bb, X_train, variable_features, metric, continuous_features,
         result_columns = [c for c in result_columns if c in df.columns]
         df = df[result_columns]
 
+        if cfe == 'dpg-cf' and total_cf_generated == 0:
+            print(f"[ERROR] DPG-CF generated 0 counterfactuals across all test instances.")
+            print(f"Constraints loaded: {dpg_constraints_path}")
+            print(f"Target classes: {np.unique(y_train)}")
+            print(f"Sample feature ranges: {X_train.min(axis=0)} to {X_train.max(axis=0)}")
+            return -1
+
         if not os.path.isfile(filename_results):
             df.to_csv(filename_results, index=False)
         else:
@@ -492,7 +556,7 @@ def experiment(cfe, bb, X_train, variable_features, metric, continuous_features,
 
 def main():
 
-    nbr_test = 20
+    nbr_test = 1
     dataset = 'titanic'
     black_box = 'RF'
     normalize = 'standard'
@@ -593,13 +657,17 @@ def main():
         filename_results = path_results + 'nbr_base_estimators_%s_%s_%s.csv' % (dataset, black_box, cfe_str)
         
         print(datetime.datetime.now(), "Running DPG-CF only mode...")
-        experiment(cfe, bb, X_train, variable_features, metric,
+        ret = experiment(cfe, bb, X_train, y_train, variable_features, metric,
                    continuous_features, categorical_features_lists,
                    X_test, nbr_test, search_diversity, dataset, black_box, known_train,
                    continuous_features_all, categorical_features_all, ratio_cont, nbr_features,
                    filename_results, filename_results, features_names, None, None,
                    dpg_constraints_path=dpg_constraints_path,
                    dpg_dict_non_actionable=dpg_dict_non_actionable)
+        
+        if ret == -1:
+            print("DPG-CF experiment failed due to 0 counterfactuals generated")
+            return -1
         
         print(datetime.datetime.now(), "DPG-CF experiment completed!")
         print(f"Results saved to: {filename_results}")
@@ -623,13 +691,16 @@ def main():
             cfe_str = cfe
             filename_results = path_results + 'nbr_base_estimators_%s_%s_%s.csv' % (dataset, black_box, cfe_str)
             
-            experiment(cfe, bb, X_train, variable_features, metric,
+            ret = experiment(cfe, bb, X_train, y_train, variable_features, metric,
                        continuous_features, categorical_features_lists,
                        X_test, nbr_test, search_diversity, dataset, black_box, known_train,
                        continuous_features_all, categorical_features_all, ratio_cont, nbr_features,
                        filename_results, filename_results, features_names, None, None,
                        dpg_constraints_path=dpg_constraints_path,
                        dpg_dict_non_actionable=dpg_dict_non_actionable)
+            if ret == -1:
+                print(f"Skipping {cfe} due to failure")
+                continue
         else:
             for covertype in ['majority',
                               # 'heuristic',
@@ -645,7 +716,7 @@ def main():
                 filename_results = path_results + 'nbr_base_estimators_%s_%s_%s.csv' % (dataset, black_box, cfe_str)
 
                 for nbr_estimators in [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]:
-                    experiment(cfe, bb, X_train, variable_features, metric,
+                    experiment(cfe, bb, X_train, y_train, variable_features, metric,
                                continuous_features, categorical_features_lists,
                                X_test, nbr_test, search_diversity, dataset, black_box, known_train,
                                continuous_features_all, categorical_features_all, ratio_cont, nbr_features,
