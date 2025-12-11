@@ -9,6 +9,7 @@ tensorflow
 category_encoders
 lightgbm
 packaging>=21.0
+IPython
 
 #dpg dependencies
 tdqm
