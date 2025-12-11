@@ -3,7 +3,7 @@ import numpy as np
 
 from joblib import effective_n_jobs
 from joblib import Parallel, delayed
-from distutils.version import LooseVersion
+from packaging import version
 
 from collections import defaultdict
 
@@ -66,7 +66,7 @@ def _joblib_parallel_args(**kwargs):
     """
     import joblib
 
-    if joblib.__version__ >= LooseVersion('0.12'):
+    if version.parse(joblib.__version__) >= version.parse('0.12'):
         return kwargs
 
     extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
