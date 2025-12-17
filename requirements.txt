@@ -10,6 +10,8 @@ category_encoders
 lightgbm
 packaging>=21.0
 IPython
+jax
+cvxpy
 
 #dpg dependencies
 tdqm
