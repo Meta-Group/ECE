@@ -82,10 +82,10 @@ def remove_missing_values(df):
         if nbr_missing > 0:
             if column_name in df._get_numeric_data().columns:
                 mean = df[column_name].mean()
-                df[column_name].fillna(mean, inplace=True)
+                df[column_name] = df[column_name].fillna(mean)
             else:
                 mode = df[column_name].mode().values[0]
-                df[column_name].fillna(mode, inplace=True)
+                df[column_name] = df[column_name].fillna(mode)
     return df
 
 
@@ -710,7 +710,10 @@ def get_tabular_dataset(name, path='./', normalize=None, test_size=0.3, random_s
     n_cate_var = len(categorical_features_lists)
     n_cate_var1h = n_var - n_cont_var
 
-    X = df[feature_names].values.astype(np.float64)
+    if encode == 'onehot':
+        X = df[feature_names].values.astype(np.float64)
+    else:
+        X = df[feature_names].values
     y = df[class_name].values
 
     if normalize == 'minmax':
