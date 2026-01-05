@@ -12,6 +12,7 @@ packaging>=21.0
 IPython
 jax
 cvxpy
+sklearn-lvq
 
 #dpg dependencies
 tdqm
