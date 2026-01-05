@@ -147,7 +147,7 @@ def main():
     # dataset = 'bank'
     # black_box = 'SVM'
 
-    black_box = 'DNN'
+    black_box = 'LGBM'
     for dataset in [
         'compas',
         'adult',
