@@ -114,6 +114,9 @@ def continuous_distance(x, cf_list, continuous_features, metric='euclidean', X=N
     else:
         dist = cdist(x.reshape(1, -1)[:, continuous_features], cf_list[:, continuous_features], metric=metric)
 
+    if agg == 'none':
+        return dist
+
     if agg is None or agg == 'mean':
         return np.mean(dist)
 
@@ -127,6 +130,9 @@ def continuous_distance(x, cf_list, continuous_features, metric='euclidean', X=N
 def categorical_distance(x, cf_list, categorical_features, metric='jaccard', agg=None):
 
     dist = cdist(x.reshape(1, -1)[:, categorical_features], cf_list[:, categorical_features], metric=metric)
+
+    if agg == 'none':
+        return dist
 
     if agg is None or agg == 'mean':
         return np.mean(dist)
@@ -379,9 +385,10 @@ def plausibility(x, bb, cf_list, X_test, y_pred, continuous_features_all,
         y_cf_val = bb.predict(cf.reshape(1, -1))[0]
         X_test_y = X_test[y_cf_val == y_pred]
         # neigh_dist = exp.cdist(x.reshape(1, -1), X_test_y)
+        # Use agg='none' to get individual distances for nearest neighbor lookup
         neigh_dist = distance_mh(x.reshape(1, -1), X_test_y, continuous_features_all,
-                        categorical_features_all, X_train, ratio_cont)
-        idx_neigh = np.argsort(neigh_dist)[0]
+                        categorical_features_all, X_train, ratio_cont, agg='none')
+        idx_neigh = np.argsort(neigh_dist.flatten())[0]
         # closest_idx = closest_idx = idx_neigh[0]
         # closest = X_test_y[closest_idx]
         closest = X_test_y[idx_neigh]
